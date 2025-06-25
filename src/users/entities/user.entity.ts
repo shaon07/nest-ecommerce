@@ -1,5 +1,5 @@
 import { Exclude } from 'class-transformer';
-import { Roles } from 'src/utility/enums/roles.enum';
+import { Role } from 'src/utility/enums/roles.enum';
 import {
   Column,
   CreateDateColumn,
@@ -25,10 +25,10 @@ export class UserEntity {
 
   @Column({
     type: 'enum',
-    enum: Roles,
-    default: Roles.USER,
+    enum: Role,
+    default: Role.USER,
   })
-  role: Roles;
+  role: Role;
 
   @Exclude()
   @Column({ nullable: true, type: 'text' })
