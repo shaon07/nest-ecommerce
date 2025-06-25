@@ -2,13 +2,14 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { plainToInstance } from 'class-transformer';
 import { UserEntity } from 'src/users/entities/user.entity';
 import { UsersService } from 'src/users/users.service';
+import { LoginDto } from './dto/login-user.dto';
 import { RegisterUserDto } from './dto/register-user.dto';
 
 @Injectable()
@@ -27,7 +28,7 @@ export class AuthService {
       throw new ForbiddenException('Email already exists');
     }
 
-    const hashedPassword = await this.hashPassword(registerUserDto.password);
+    const hashedPassword = await this.generateHash(registerUserDto.password);
     const user = await this.userService.create({
       email: registerUserDto.email,
       name: registerUserDto.name,
@@ -39,16 +40,41 @@ export class AuthService {
     }
 
     const tokens = await this.generateToken(user);
+    const hashedToken = await this.generateHash(tokens.refreshToken);
 
     await this.userService.update(user.id, {
-      refreshToken: tokens.refreshToken,
+      refreshToken: hashedToken,
     });
 
-    const updatedUser = plainToInstance(
-      UserEntity,
-      await this.userService.findOne(user.id),
+    const updatedUser = await this.userService.findOne(user.id);
+
+    return {
+      user: updatedUser,
+      tokens,
+    };
+  }
+
+  async login(loginDto: LoginDto) {
+    const user = await this.userService.findOneByEmail(loginDto.email);
+    if (!user) {
+      throw new NotFoundException('user not found');
+    }
+
+    const isValidPassword = await this.comparePassword(
+      loginDto.password,
+      user.password,
     );
 
+    if (!isValidPassword) {
+      throw new ForbiddenException('invalid password');
+    }
+
+    const tokens = await this.generateToken(user);
+    const hashedRefreshToken = await this.generateHash(tokens.refreshToken);
+    await this.userService.update(user.id, {
+      refreshToken: hashedRefreshToken,
+    });
+    const updatedUser = await this.userService.findOne(user.id);
     return {
       user: updatedUser,
       tokens,
@@ -89,7 +115,7 @@ export class AuthService {
     );
   }
 
-  async hashPassword(password: string) {
+  async generateHash(password: string) {
     return await bcrypt.hash(password, 10);
   }
 

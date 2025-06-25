@@ -44,6 +44,15 @@ export class UsersService {
   }
 
   async update(id: string, updateUserDto: Partial<UserEntity>) {
+    const existingUser = await this.usersRepository.findOne({
+      where: {
+        id,
+      },
+    });
+
+    if (!existingUser) {
+      throw new ForbiddenException('user not found');
+    }
     return await this.usersRepository.update(id, updateUserDto);
   }
 
