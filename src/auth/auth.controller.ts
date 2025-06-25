@@ -7,6 +7,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { RequestWithUser } from 'src/utility/types';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login-user.dto';
 import { RegisterUserDto } from './dto/register-user.dto';
@@ -29,8 +30,7 @@ export class AuthController {
 
   @UseGuards(JwtGuard)
   @Post('logout')
-  async logout(@Request() req: any) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+  async logout(@Request() req: RequestWithUser) {
     return await this.authService.logout(req.user);
   }
 }
