@@ -31,8 +31,8 @@ export class UserEntity {
   role: Roles;
 
   @Exclude()
-  @Column({ nullable: true })
-  refreshToken: string;
+  @Column({ nullable: true, type: 'text' })
+  refreshToken: string | null;
 
   @CreateDateColumn()
   createdAt: Date;

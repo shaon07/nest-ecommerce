@@ -81,6 +81,14 @@ export class AuthService {
     };
   }
 
+  async logout(user: UserEntity) {
+    await this.userService.update(user.id, {
+      refreshToken: null,
+    });
+
+    return user;
+  }
+
   async generateToken(user: UserEntity) {
     const accessToken = await this.generateAccessToken(user);
     const refreshToken = await this.generateRefreshToken(user);
