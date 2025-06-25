@@ -3,6 +3,7 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
@@ -60,7 +61,7 @@ export class AuthService {
       throw new NotFoundException('user not found');
     }
 
-    const isValidPassword = await this.comparePassword(
+    const isValidPassword = await this.compareHash(
       loginDto.password,
       user.password,
     );
@@ -87,6 +88,32 @@ export class AuthService {
     });
 
     return user;
+  }
+
+  async revalidateRefreshToken(token: string) {
+    const payload = await this.jwtService.verifyAsync<{
+      id: string;
+      iat?: number;
+      exp?: number;
+    }>(token, {
+      secret: this.configService.get<string>('JWT_REFRESH_TOKEN_SECRET'),
+    });
+    const user = await this.userService.findOne(payload.id);
+    if (!user || !user.refreshToken) {
+      throw new UnauthorizedException('token is invalid or user not found');
+    }
+
+    const isTokenIsValid = await this.compareHash(token, user.refreshToken);
+    if (!isTokenIsValid) {
+      throw new UnauthorizedException('token is invalid');
+    }
+    const tokens = await this.generateToken(user);
+    const hashedToken = await this.generateHash(tokens.refreshToken);
+    await this.userService.update(user.id, {
+      refreshToken: hashedToken,
+    });
+
+    return tokens;
   }
 
   async generateToken(user: UserEntity) {
@@ -127,7 +154,7 @@ export class AuthService {
     return await bcrypt.hash(password, 10);
   }
 
-  async comparePassword(password: string, hashedPassword: string) {
+  async compareHash(password: string, hashedPassword: string) {
     return await bcrypt.compare(password, hashedPassword);
   }
 }

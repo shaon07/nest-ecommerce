@@ -33,4 +33,9 @@ export class AuthController {
   async logout(@Request() req: RequestWithUser) {
     return await this.authService.logout(req.user);
   }
+
+  @Post('token')
+  async revalidateRefreshToken(@Body() token: { token: string }) {
+    return await this.authService.revalidateRefreshToken(token.token);
+  }
 }
