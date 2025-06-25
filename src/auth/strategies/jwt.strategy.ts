@@ -18,7 +18,9 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     });
   }
 
-  async validate(payload: UserEntity): Promise<UserEntity> {
+  async validate(
+    payload: Pick<UserEntity, 'email' | 'id'>,
+  ): Promise<UserEntity> {
     const user = await this.userService.findOneByEmail(payload.email);
     if (!user) {
       throw new UnauthorizedException('invalid credentials');
