@@ -1,4 +1,8 @@
-import { Injectable, UnprocessableEntityException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserEntity } from 'src/users/entities/user.entity';
 import { Repository } from 'typeorm';
@@ -37,15 +41,42 @@ export class ProductsService {
     });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} product`;
+  async findOne(id: string) {
+    const product = await this.productRepository.findOne({
+      where: {
+        id,
+      },
+      relations: ['user'],
+    });
+
+    if (!product) {
+      throw new NotFoundException('Product not found');
+    }
+    return product;
   }
 
-  update(id: number, updateProductDto: UpdateProductDto) {
-    return updateProductDto;
+  async update(id: string, updateProductDto: UpdateProductDto) {
+    const existingProduct = await this.productRepository.findOne({
+      where: {
+        id,
+      },
+    });
+
+    if (!existingProduct) {
+      throw new NotFoundException('Product not found');
+    }
+
+    await this.productRepository.update(id, updateProductDto);
+    const updatedProduct = await this.productRepository.findOne({
+      where: {
+        id: existingProduct.id,
+      },
+      relations: ['user'],
+    });
+    return updatedProduct;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} product`;
+  remove(id: string) {
+    return this.productRepository.delete(id);
   }
 }
