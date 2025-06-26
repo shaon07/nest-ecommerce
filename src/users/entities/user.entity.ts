@@ -1,9 +1,11 @@
 import { Exclude } from 'class-transformer';
+import { ProductEntity } from 'src/products/entities/product.entity';
 import { Role } from 'src/utility/enums/roles.enum';
 import {
   Column,
   CreateDateColumn,
   Entity,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -33,6 +35,11 @@ export class UserEntity {
   @Exclude()
   @Column({ nullable: true, type: 'text' })
   refreshToken: string | null;
+
+  @OneToMany(() => ProductEntity, (product) => product.user, {
+    cascade: ['update', 'insert'],
+  })
+  products: ProductEntity[];
 
   @CreateDateColumn()
   createdAt: Date;
