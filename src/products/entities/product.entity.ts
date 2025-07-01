@@ -1,8 +1,10 @@
+import { CategoryEntity } from 'src/categories/entities/category.entity';
 import { UserEntity } from 'src/users/entities/user.entity';
 import {
   Column,
   CreateDateColumn,
   Entity,
+  ManyToMany,
   ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -26,6 +28,11 @@ export class ProductEntity {
     onDelete: 'CASCADE',
   })
   user: UserEntity;
+
+  @ManyToMany(() => CategoryEntity, (category) => category.products, {
+    cascade: true,
+  })
+  categories: CategoryEntity[];
 
   @CreateDateColumn()
   createdAt: Date;
