@@ -4,6 +4,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinTable,
   ManyToMany,
   ManyToOne,
   PrimaryGeneratedColumn,
@@ -32,6 +33,7 @@ export class ProductEntity {
   @ManyToMany(() => CategoryEntity, (category) => category.products, {
     cascade: true,
   })
+  @JoinTable()
   categories: CategoryEntity[];
 
   @CreateDateColumn()

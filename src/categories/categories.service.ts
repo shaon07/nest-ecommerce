@@ -1,8 +1,13 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserEntity } from 'src/users/entities/user.entity';
 import { Repository } from 'typeorm';
 import { CreateCategoryDto } from './dto/create-category.dto';
+import { UpdateCategoryDto } from './dto/update-category.dto';
 import { CategoryEntity } from './entities/category.entity';
 
 @Injectable()
@@ -37,15 +42,59 @@ export class CategoriesService {
     return this.categoryRepository.find();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} category`;
+  async findOne(id: string) {
+    const category = await this.categoryRepository.findOne({
+      where: {
+        id,
+      },
+      relations: ['products'],
+    });
+
+    if (!category) {
+      throw new NotFoundException('Category not found');
+    }
+
+    return category;
   }
 
-  // update(id: number, updateCategoryDto: UpdateCategoryDto) {
-  //   return `This action updates a #${id} category`;
-  // }
+  async update(id: string, updateCategoryDto: UpdateCategoryDto) {
+    const existingCategory = await this.categoryRepository.preload({
+      id,
+      name: updateCategoryDto.name,
+    });
 
-  remove(id: number) {
-    return `This action removes a #${id} category`;
+    if (!existingCategory) {
+      throw new NotFoundException('Category not found');
+    }
+
+    const updatedCategory =
+      await this.categoryRepository.save(existingCategory);
+
+    if (!updatedCategory) {
+      throw new ConflictException('There was a problem updating the category');
+    }
+
+    return updatedCategory;
+  }
+
+  async remove(id: string) {
+    const existingCategory = await this.categoryRepository.findOne({
+      where: {
+        id,
+      },
+    });
+
+    if (!existingCategory) {
+      throw new NotFoundException('Category not found');
+    }
+
+    try {
+      await this.categoryRepository.remove(existingCategory);
+      return {
+        message: 'Category deleted successfully',
+      };
+    } catch {
+      throw new ConflictException('There was a problem deleting the category');
+    }
   }
 }

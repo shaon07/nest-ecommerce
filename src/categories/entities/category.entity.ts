@@ -20,7 +20,7 @@ export class CategoryEntity {
   created_by: string;
 
   @ManyToMany(() => ProductEntity, (product) => product.categories)
-  products: ProductEntity[];
+  products?: ProductEntity[];
 
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   created_at: Date;
